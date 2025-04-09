@@ -1,13 +1,23 @@
-import { redirect } from 'next/navigation';
-import AdminSidebar from '@/components/AdminSidebar';
+'use client';
 
-export default async function AdminLayout({
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import AdminSidebar from '@/components/AdminSidebar';
+import { useAuthStore } from '@/store/auth';
+
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Simple admin check using localStorage will be done on the client side
-  // in each admin page component
+  const router = useRouter();
+  const phone = useAuthStore((state) => state.phone);
+
+  useEffect(() => {
+    if (!phone) {
+      router.push('/login');
+    }
+  }, [phone, router]);
 
   return (
     <div className="flex min-h-screen">

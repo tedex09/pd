@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     await connectToDatabase();
-    const user = await User.findById(params.id);
+    const user = await User.findOne({ phone: params.id });
     
     if (!user) {
       return NextResponse.json(

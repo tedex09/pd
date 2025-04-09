@@ -1,14 +1,20 @@
-import { redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
+'use client';
 
-export default async function Home() {
-  const session = await getSession();
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth';
+
+export default function Home() {
+  const router = useRouter();
+  const phone = useAuthStore((state) => state.phone);
   
-  if (!session) {
-    redirect('/login');
-  } else {
-    redirect('/dashboard');
-  }
+  useEffect(() => {
+    if (!phone) {
+      router.push('/login');
+    } else {
+      router.push('/dashboard');
+    }
+  }, [phone, router]);
   
   return null;
 }

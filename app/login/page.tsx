@@ -5,34 +5,24 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Phone } from 'lucide-react';
+import { useAuthStore } from '@/store/auth';
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const setAuthPhone = useAuthStore((state) => state.setPhone);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const res = await fetch('/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.userId) {
-        localStorage.setItem('userId', data.userId);
-        router.push('/dashboard');
-      } else {
-        throw new Error(data.error || 'Login failed');
-      }
+      // Save phone to Zustand store
+      setAuthPhone(phone);
+      router.push('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      // Here you could add a toast notification for error feedback
     } finally {
       setLoading(false);
     }

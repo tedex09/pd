@@ -9,24 +9,25 @@ import { useToast } from '@/hooks/use-toast';
 import Roleta from '@/components/Roleta';
 import UserHeader from '@/components/UserHeader';
 import ActionButton from '@/components/ActionButton';
+import { useAuthStore } from '@/store/auth';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
   const { toast } = useToast();
+  const phone = useAuthStore((state) => state.phone);
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
+    if (!phone) {
       router.push('/login');
       return;
     }
-    fetchUser(userId);
-  }, [router]);
+    fetchUser();
+  }, [router, phone]);
 
-  const fetchUser = async (userId: string) => {
+  const fetchUser = async () => {
     try {
-      const res = await fetch(`/api/users/${userId}`);
+      const res = await fetch(`/api/users/${phone}`);
       const data = await res.json();
       setUser(data);
     } catch (error) {
@@ -36,19 +37,17 @@ export default function DashboardPage() {
 
   const handleAction = async (type: 'like' | 'share' | 'purchase') => {
     try {
-      const userId = localStorage.getItem('userId');
       await fetch('/api/rewards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
+          phone,
           type,
           value: type === 'purchase' ? 50 : 10,
         }),
       });
-      fetchUser(userId!);
+      fetchUser();
 
-      // Show success toast
       toast({
         title: "Sucesso! 🎉",
         description: `Você ganhou ${type === 'purchase' ? 50 : 10} pontos!`,
@@ -81,7 +80,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Roleta onSpinComplete={() => fetchUser(user._id)} />
+          <Roleta onSpinComplete={fetchUser} />
         </motion.div>
 
         <motion.div 
