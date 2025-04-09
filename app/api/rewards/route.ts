@@ -5,9 +5,9 @@ import { User } from '@/models/user';
 
 export async function POST(request: Request) {
   try {
-    const { userId, type, value } = await request.json();
+    const { phone, type, value } = await request.json();
 
-    if (!userId || !type || value === undefined) {
+    if (!phone || !type || value === undefined) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -16,16 +16,8 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
 
-    // Create reward
-    const reward = await Reward.create({
-      userId,
-      type,
-      value,
-      date: new Date(),
-    });
-
-    // Update user points and lastSpin if it's a daily spin
-    const user = await User.findById(userId);
+    // Find user by phone
+    const user = await User.findOne({ phone });
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -33,13 +25,47 @@ export async function POST(request: Request) {
       );
     }
 
+    // Create reward
+    const reward = await Reward.create({
+      userId: user._id,
+      type,
+      value,
+      date: new Date(),
+    });
+
+    // Update user points and lastSpin if it's a daily spin
     user.points += value;
+    
     if (type === 'daily_spin') {
-      user.lastSpin = new Date();
+      const today = new Date();
+      const lastSpinDate = user.lastSpin ? new Date(user.lastSpin) : null;
+      
+      // Check if this is a consecutive day
+      if (lastSpinDate) {
+        const isConsecutiveDay = 
+          lastSpinDate.getDate() === today.getDate() - 1 &&
+          lastSpinDate.getMonth() === today.getMonth() &&
+          lastSpinDate.getFullYear() === today.getFullYear();
+        
+        if (isConsecutiveDay) {
+          user.streak += 1;
+        } else {
+          user.streak = 1;
+        }
+      } else {
+        user.streak = 1;
+      }
+      
+      user.lastSpin = today;
     }
+    
     await user.save();
 
-    return NextResponse.json({ reward, points: user.points });
+    return NextResponse.json({ 
+      reward, 
+      points: user.points,
+      streak: user.streak 
+    });
   } catch (error) {
     console.error('Error creating reward:', error);
     return NextResponse.json(

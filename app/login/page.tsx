@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Phone } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
@@ -21,23 +20,31 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Check if user exists
       const res = await fetch(`/api/users/${phone}`);
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || 'Usuário não encontrado');
+        toast({
+          title: "Erro",
+          description: "Usuário não cadastrado. Por favor, entre em contato com o administrador.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      setAuthPhone(phone);
-      toast({
-        title: "Bem-vindo!",
-        description: "Login realizado com sucesso.",
+      // Update last login
+      await fetch(`/api/users/${phone}/login`, {
+        method: 'POST',
       });
+
+      // Save phone to Zustand store
+      setAuthPhone(phone);
+      localStorage.setItem('phone', phone);
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Erro",
-        description: error.message || "Ocorreu um erro ao fazer login",
+        description: "Erro ao fazer login. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -74,13 +81,6 @@ export default function LoginPage() {
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </Button>
-
-          <p className="text-center text-sm text-muted-foreground">
-            Não tem uma conta?{' '}
-            <Link href="/register" className="text-primary hover:underline">
-              Cadastre-se
-            </Link>
-          </p>
         </form>
       </div>
     </div>
