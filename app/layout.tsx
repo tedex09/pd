@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Manrope } from 'next/font/google';
+import { Toaster } from '@/components/ui/toaster';
 
 export const manrope = Manrope({
   subsets: ['latin'],
@@ -24,6 +25,7 @@ export default function RootLayout({
         <main className="min-h-screen bg-background">
           {children}
         </main>
+        <Toaster />
       </body>
     </html>
   );

@@ -6,23 +6,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Phone } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const setAuthPhone = useAuthStore((state) => state.setPhone);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Save phone to Zustand store
+      const res = await fetch(`/api/users/${phone}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Usuário não encontrado');
+      }
+
       setAuthPhone(phone);
+      toast({
+        title: "Bem-vindo!",
+        description: "Login realizado com sucesso.",
+      });
       router.push('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Ocorreu um erro ao fazer login",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -57,6 +74,13 @@ export default function LoginPage() {
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Não tem uma conta?{' '}
+            <Link href="/register" className="text-primary hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
         </form>
       </div>
     </div>
